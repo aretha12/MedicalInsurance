@@ -13,7 +13,6 @@ st.markdown(
     "berdasarkan data klinis dan gaya hidup.**"
 )
 
-# ── Load model ──────────────────────────────────────────────────────────────
 @st.cache_resource
 def load_models():
     xgb    = joblib.load("XGB_pkl")
@@ -31,15 +30,30 @@ except Exception as e:
     st.info("Pastikan file XGB_pkl, RF_pkl, DT_pkl, LR_pkl, dan scaler_pkl ada di direktori yang sama.")
     models_loaded = False
 
-AKURASI_XGB = 0.92
+F1_SCORE = {
+    "XGBoost": 0.86,
+    "Random Forest": 0.86,
+    "Decision Tree": 0.84,
+    "Logistic Regression": 0.81,
+}
 
-# ── Sidebar ──────────────────────────────────────────────────────────────────
-st.sidebar.markdown("### 🤖 Model")
-st.sidebar.success("**XGBoost** (Akurasi 92%)")
+st.sidebar.markdown("### 🤖 Pilihan Model")
+st.sidebar.markdown("Secara default aplikasi menggunakan **XGBoost** (F1-Score tertinggi).")
+
+advanced_mode = st.sidebar.toggle("⚙️ Mode Lanjutan (pilih model sendiri)", value=False)
+
+if advanced_mode:
+    model_choice = st.sidebar.selectbox(
+        "Pilih Model:",
+        ["XGBoost", "Random Forest", "Decision Tree", "Logistic Regression"]
+    )
+    st.sidebar.info(f"F1-Score model ini: **{F1_SCORE[model_choice]*100:.0f}%**")
+else:
+    model_choice = "XGBoost"
+    st.sidebar.success("✅ Menggunakan **XGBoost** (Direkomendasikan)")
+
 st.sidebar.markdown("---")
 st.sidebar.caption("Developed with 💖 using Streamlit")
-
-# ── Input Form ───────────────────────────────────────────────────────────────
 st.header("📋 Data Pasien")
 
 col1, col2 = st.columns(2)
@@ -74,8 +88,6 @@ with c2:
 with c3:
     proc_consult_count = st.number_input("Prosedur Konsultasi", 0, 30, 2)
     proc_lab_count     = st.number_input("Prosedur Lab", 0, 50, 3)
-
-# ── Encode kategori ──────────────────────────────────────────────────────────
 from sklearn.preprocessing import LabelEncoder
 
 def encode_cat(val, classes):
@@ -97,19 +109,26 @@ input_data = np.array([[
     proc_consult_count, proc_lab_count
 ]])
 
-# ── Prediksi ─────────────────────────────────────────────────────────────────
 if st.button("🔍 Prediksi Risiko Kesehatan", disabled=not models_loaded):
 
     input_scaled = scaler.transform(input_data)
-    prediction   = xgb_model.predict(input_scaled)[0]
-    proba        = xgb_model.predict_proba(input_scaled)[0]
+
+    model_map = {
+        "XGBoost": xgb_model,
+        "Random Forest": rf_model,
+        "Decision Tree": dt_model,
+        "Logistic Regression": lr_model,
+    }
+    chosen_model = model_map[model_choice]
+    prediction   = chosen_model.predict(input_scaled)[0]
+    proba        = chosen_model.predict_proba(input_scaled)[0]
     prob_high    = proba[1] * 100
 
     st.divider()
     st.subheader("📊 Hasil Prediksi")
 
-    st.metric("Model Digunakan", "XGBoost")
-    st.metric("Akurasi Model (Validasi)", f"{AKURASI_XGB*100:.1f}%")
+    st.metric("Model Digunakan", model_choice)
+    st.metric("F1-Score Model", f"{F1_SCORE[model_choice]*100:.0f}%")
 
     if prediction == 1:
         st.error("🔴 Pasien terindikasi **HIGH RISK** (Risiko Tinggi)")
@@ -124,6 +143,19 @@ if st.button("🔍 Prediksi Risiko Kesehatan", disabled=not models_loaded):
         )
 
     st.progress(int(prob_high), text=f"Probabilitas High Risk: **{prob_high:.1f}%**")
+    if advanced_mode:
+        st.subheader("🤖 Perbandingan Semua Model")
+        cols = st.columns(4)
+        model_labels = ["XGBoost", "Random Forest", "Decision Tree", "Logistic Regression"]
+        model_objs   = [xgb_model, rf_model, dt_model, lr_model]
+        for col, label, mdl in zip(cols, model_labels, model_objs):
+            p      = mdl.predict(input_scaled)[0]
+            prob_h = mdl.predict_proba(input_scaled)[0][1] * 100
+            with col:
+                if p == 1:
+                    st.error(f"**{label}**\n\n🔴 High Risk\n\n{prob_h:.1f}%")
+                else:
+                    st.success(f"**{label}**\n\n🟢 Low Risk\n\n{prob_h:.1f}%")
 
     st.subheader("💡 Saran Kesehatan")
     st.markdown("""
