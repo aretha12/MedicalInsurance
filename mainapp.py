@@ -16,10 +16,10 @@ st.markdown(
 # ── Load model ──────────────────────────────────────────────────────────────
 @st.cache_resource
 def load_models():
-    xgb   = joblib.load("XGB_pkl")
-    rf    = joblib.load("RF_pkl")
-    dt    = joblib.load("DT_pkl")
-    lr    = joblib.load("LR_pkl")
+    xgb    = joblib.load("XGB_pkl")
+    rf     = joblib.load("RF_pkl")
+    dt     = joblib.load("DT_pkl")
+    lr     = joblib.load("LR_pkl")
     scaler = joblib.load("scaler_pkl")
     return xgb, rf, dt, lr, scaler
 
@@ -31,19 +31,11 @@ except Exception as e:
     st.info("Pastikan file XGB_pkl, RF_pkl, DT_pkl, LR_pkl, dan scaler_pkl ada di direktori yang sama.")
     models_loaded = False
 
-AKURASI = {
-    "XGBoost": 0.92,
-    "Random Forest": 0.91,
-    "Decision Tree": 0.87,
-    "Logistic Regression": 0.83,
-}
+AKURASI_XGB = 0.92
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
-st.sidebar.header("⚙️ Pengaturan Model")
-model_choice = st.sidebar.selectbox(
-    "Pilih Model Prediksi:",
-    ["XGBoost", "Random Forest", "Decision Tree", "Logistic Regression"]
-)
+st.sidebar.markdown("### 🤖 Model")
+st.sidebar.success("**XGBoost** (Akurasi 92%)")
 st.sidebar.markdown("---")
 st.sidebar.caption("Developed with 💖 using Streamlit")
 
@@ -71,23 +63,22 @@ with col2:
 st.subheader("🏨 Riwayat Pelayanan Kesehatan")
 c1, c2, c3 = st.columns(3)
 with c1:
-    visits_last_year             = st.number_input("Kunjungan (1 thn terakhir)", 0, 50, 3)
-    hospitalizations_last_3yrs   = st.number_input("Rawat Inap (3 thn terakhir)", 0, 20, 0)
-    days_hospitalized_last_3yrs  = st.number_input("Total Hari Rawat Inap", 0, 365, 0)
-    medication_count             = st.number_input("Jumlah Obat Rutin", 0, 30, 2)
+    visits_last_year            = st.number_input("Kunjungan (1 thn terakhir)", 0, 50, 3)
+    hospitalizations_last_3yrs  = st.number_input("Rawat Inap (3 thn terakhir)", 0, 20, 0)
+    days_hospitalized_last_3yrs = st.number_input("Total Hari Rawat Inap", 0, 365, 0)
+    medication_count            = st.number_input("Jumlah Obat Rutin", 0, 30, 2)
 with c2:
-    proc_imaging_count  = st.number_input("Prosedur Imaging", 0, 20, 1)
-    proc_surgery_count  = st.number_input("Prosedur Operasi", 0, 10, 0)
-    proc_physio_count   = st.number_input("Prosedur Fisioterapi", 0, 30, 0)
+    proc_imaging_count = st.number_input("Prosedur Imaging", 0, 20, 1)
+    proc_surgery_count = st.number_input("Prosedur Operasi", 0, 10, 0)
+    proc_physio_count  = st.number_input("Prosedur Fisioterapi", 0, 30, 0)
 with c3:
-    proc_consult_count  = st.number_input("Prosedur Konsultasi", 0, 30, 2)
-    proc_lab_count      = st.number_input("Prosedur Lab", 0, 50, 3)
+    proc_consult_count = st.number_input("Prosedur Konsultasi", 0, 30, 2)
+    proc_lab_count     = st.number_input("Prosedur Lab", 0, 50, 3)
 
-# ── Encode kategori (sesuai LabelEncoder di notebook) ────────────────────────
+# ── Encode kategori ──────────────────────────────────────────────────────────
 from sklearn.preprocessing import LabelEncoder
 
 def encode_cat(val, classes):
-    """Encode kategori sesuai urutan alfabetis LabelEncoder."""
     le = LabelEncoder()
     le.fit(classes)
     return int(le.transform([val])[0])
@@ -110,24 +101,15 @@ input_data = np.array([[
 if st.button("🔍 Prediksi Risiko Kesehatan", disabled=not models_loaded):
 
     input_scaled = scaler.transform(input_data)
-
-    model_map = {
-        "XGBoost": xgb_model,
-        "Random Forest": rf_model,
-        "Decision Tree": dt_model,
-        "Logistic Regression": lr_model,
-    }
-    chosen_model = model_map[model_choice]
-    prediction   = chosen_model.predict(input_scaled)[0]
-    proba        = chosen_model.predict_proba(input_scaled)[0]
+    prediction   = xgb_model.predict(input_scaled)[0]
+    proba        = xgb_model.predict_proba(input_scaled)[0]
+    prob_high    = proba[1] * 100
 
     st.divider()
     st.subheader("📊 Hasil Prediksi")
 
-    st.metric("Model Digunakan", model_choice)
-    st.metric("Akurasi Model (Validasi)", f"{AKURASI[model_choice]*100:.1f}%")
-
-    prob_high = proba[1] * 100
+    st.metric("Model Digunakan", "XGBoost")
+    st.metric("Akurasi Model (Validasi)", f"{AKURASI_XGB*100:.1f}%")
 
     if prediction == 1:
         st.error("🔴 Pasien terindikasi **HIGH RISK** (Risiko Tinggi)")
@@ -142,20 +124,6 @@ if st.button("🔍 Prediksi Risiko Kesehatan", disabled=not models_loaded):
         )
 
     st.progress(int(prob_high), text=f"Probabilitas High Risk: **{prob_high:.1f}%**")
-
-    # Semua model
-    st.subheader("🤖 Perbandingan Prediksi Semua Model")
-    cols = st.columns(4)
-    model_labels = ["XGBoost", "Random Forest", "Decision Tree", "Logistic Regression"]
-    model_objs   = [xgb_model, rf_model, dt_model, lr_model]
-    for col, label, mdl in zip(cols, model_labels, model_objs):
-        p = mdl.predict(input_scaled)[0]
-        prob_h = mdl.predict_proba(input_scaled)[0][1] * 100
-        with col:
-            if p == 1:
-                st.error(f"**{label}**\n\n🔴 High Risk\n\n{prob_h:.1f}%")
-            else:
-                st.success(f"**{label}**\n\n🟢 Low Risk\n\n{prob_h:.1f}%")
 
     st.subheader("💡 Saran Kesehatan")
     st.markdown("""
