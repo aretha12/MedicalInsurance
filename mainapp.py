@@ -47,9 +47,9 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("👤 Informasi Umum")
     age     = st.number_input("Usia (tahun)", 18, 100, 35)
-    sex     = st.selectbox("Jenis Kelamin", ["Male", "Female"])
+    sex     = st.radio("Jenis Kelamin", ["Male", "Female"], horizontal=True)
     bmi     = st.number_input("BMI", 10.0, 60.0, 24.0, step=0.1)
-    smoker  = st.selectbox("Perokok?", ["No", "Yes"])
+    smoker  = st.radio("Perokok?", ["No", "Yes"], horizontal=True)
     alcohol = st.selectbox("Frekuensi Alkohol", ["Never", "Occasionally", "Frequently", "Unknown"])
     employ  = st.selectbox("Status Pekerjaan", ["Employed", "Unemployed", "Self-employed", "Retired"])
 
