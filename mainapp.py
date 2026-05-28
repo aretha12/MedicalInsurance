@@ -3,13 +3,13 @@ import numpy as np
 import joblib
 
 st.set_page_config(
-    page_title="Sistem Prediksi Risiko Asuransi Kesehatan",
+    page_title="Sistem Prediksi Estimasi Biaya Asuransi Kesehatan",
     layout="centered"
 )
 
 st.title("🏥 Sistem Prediksi Risiko Kesehatan")
 st.markdown(
-    "**Aplikasi ini memprediksi apakah seseorang termasuk kategori risiko tinggi (high risk) "
+    "**Aplikasi ini memprediksi apakah seseorang termasuk kategori risiko tinggi "
     "berdasarkan data klinis dan gaya hidup.**"
 )
 
@@ -54,40 +54,117 @@ else:
 
 st.sidebar.markdown("---")
 st.sidebar.caption("Developed with 💖 using Streamlit")
+
 st.header("📋 Data Pasien")
 
 col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("👤 Informasi Umum")
-    age     = st.number_input("Usia (tahun)", 18, 100, 35)
-    sex     = st.radio("Jenis Kelamin", ["Male", "Female"], horizontal=True)
-    bmi     = st.number_input("BMI", 10.0, 60.0, 24.0, step=0.1)
-    smoker  = st.radio("Perokok?", ["No", "Yes"], horizontal=True)
-    alcohol = st.selectbox("Frekuensi Alkohol", ["Never", "Occasionally", "Frequently", "Unknown"])
-    employ  = st.selectbox("Status Pekerjaan", ["Employed", "Unemployed", "Self-employed", "Retired"])
+
+    age = st.number_input("Usia (tahun)", 18, 100, 35)
+
+    sex = st.radio(
+        "Jenis Kelamin",
+        ["Laki-laki", "Perempuan"],
+        horizontal=True
+    )
+
+    bmi = st.number_input(
+        "BMI (Indeks Massa Tubuh)",
+        10.0, 60.0, 24.0, step=0.1
+    )
+
+    smoker = st.radio(
+        "Apakah Merokok?",
+        ["Tidak", "Ya"],
+        horizontal=True
+    )
+
+    alcohol = st.selectbox(
+        "Frekuensi Konsumsi Alkohol",
+        ["Tidak Pernah", "Kadang-kadang", "Sering", "Tidak Diketahui"]
+    )
+
+    employ = st.selectbox(
+        "Status Pekerjaan",
+        ["Bekerja", "Tidak Bekerja", "Wiraswasta", "Pensiun"]
+    )
 
 with col2:
     st.subheader("🩺 Data Klinis")
-    systolic_bp  = st.number_input("Systolic BP (mmHg)", 80, 220, 120)
-    diastolic_bp = st.number_input("Diastolic BP (mmHg)", 50, 140, 80)
-    ldl          = st.number_input("LDL (mg/dL)", 50, 300, 130)
-    hba1c        = st.number_input("HbA1c (%)", 3.0, 15.0, 5.5, step=0.1)
+
+    systolic_bp = st.number_input(
+        "Tekanan Darah Sistolik (mmHg)",
+        80, 220, 120
+    )
+
+    diastolic_bp = st.number_input(
+        "Tekanan Darah Diastolik (mmHg)",
+        50, 140, 80
+    )
+
+    ldl = st.number_input(
+        "Kolesterol LDL (mg/dL)",
+        50, 300, 130
+    )
+
+    hba1c = st.number_input(
+        "HbA1c / Gula Darah Rata-rata (%)",
+        3.0, 15.0, 5.5, step=0.1
+    )
 
 st.subheader("🏨 Riwayat Pelayanan Kesehatan")
+
 c1, c2, c3 = st.columns(3)
+
 with c1:
-    visits_last_year            = st.number_input("Kunjungan (1 thn terakhir)", 0, 50, 3)
-    hospitalizations_last_3yrs  = st.number_input("Rawat Inap (3 thn terakhir)", 0, 20, 0)
-    days_hospitalized_last_3yrs = st.number_input("Total Hari Rawat Inap", 0, 365, 0)
-    medication_count            = st.number_input("Jumlah Obat Rutin", 0, 30, 2)
+    visits_last_year = st.number_input(
+        "Jumlah Kunjungan (1 Tahun Terakhir)",
+        0, 50, 3
+    )
+
+    hospitalizations_last_3yrs = st.number_input(
+        "Jumlah Rawat Inap (3 Tahun Terakhir)",
+        0, 20, 0
+    )
+
+    days_hospitalized_last_3yrs = st.number_input(
+        "Total Hari Rawat Inap",
+        0, 365, 0
+    )
+
+    medication_count = st.number_input(
+        "Jumlah Obat Rutin",
+        0, 30, 2
+    )
+
 with c2:
-    proc_imaging_count = st.number_input("Prosedur Imaging", 0, 20, 1)
-    proc_surgery_count = st.number_input("Prosedur Operasi", 0, 10, 0)
-    proc_physio_count  = st.number_input("Prosedur Fisioterapi", 0, 30, 0)
+    proc_imaging_count = st.number_input(
+        "Pemeriksaan Pencitraan Medis",
+        0, 20, 1
+    )
+
+    proc_surgery_count = st.number_input(
+        "Jumlah Operasi",
+        0, 10, 0
+    )
+
+    proc_physio_count = st.number_input(
+        "Jumlah Fisioterapi",
+        0, 30, 0
+    )
+
 with c3:
-    proc_consult_count = st.number_input("Prosedur Konsultasi", 0, 30, 2)
-    proc_lab_count     = st.number_input("Prosedur Lab", 0, 50, 3)
+    proc_consult_count = st.number_input(
+        "Jumlah Konsultasi Dokter",
+        0, 30, 2
+    )
+
+    proc_lab_count = st.number_input(
+        "Jumlah Pemeriksaan Laboratorium",
+        0, 50, 3
+    )
 
 from sklearn.preprocessing import LabelEncoder
 
@@ -96,10 +173,19 @@ def encode_cat(val, classes):
     le.fit(classes)
     return int(le.transform([val])[0])
 
-sex_enc     = encode_cat(sex,     ["Female", "Male"])
-smoker_enc  = encode_cat(smoker,  ["No", "Yes"])
-alcohol_enc = encode_cat(alcohol, ["Frequently", "Never", "Occasionally", "Unknown"])
-employ_enc  = encode_cat(employ,  ["Employed", "Retired", "Self-employed", "Unemployed"])
+sex_enc = encode_cat(sex, ["Perempuan", "Laki-laki"])
+
+smoker_enc = encode_cat(smoker, ["Tidak", "Ya"])
+
+alcohol_enc = encode_cat(
+    alcohol,
+    ["Sering", "Tidak Pernah", "Kadang-kadang", "Tidak Diketahui"]
+)
+
+employ_enc = encode_cat(
+    employ,
+    ["Bekerja", "Pensiun", "Wiraswasta", "Tidak Bekerja"]
+)
 
 input_data = np.array([[
     age, sex_enc, bmi, smoker_enc, alcohol_enc,
@@ -120,10 +206,12 @@ if st.button("🔍 Prediksi Risiko Kesehatan", disabled=not models_loaded):
         "Decision Tree": dt_model,
         "Logistic Regression": lr_model,
     }
+
     chosen_model = model_map[model_choice]
-    prediction   = chosen_model.predict(input_scaled)[0]
-    proba        = chosen_model.predict_proba(input_scaled)[0]
-    prob_high    = proba[1] * 100
+
+    prediction = chosen_model.predict(input_scaled)[0]
+    proba = chosen_model.predict_proba(input_scaled)[0]
+    prob_high = proba[1] * 100
 
     st.divider()
     st.subheader("📊 Hasil Prediksi")
@@ -132,57 +220,99 @@ if st.button("🔍 Prediksi Risiko Kesehatan", disabled=not models_loaded):
     st.metric("F1-Score Model", f"{F1_SCORE[model_choice]*100:.0f}%")
 
     if prediction == 1:
-        st.error("🔴 Pasien terindikasi **HIGH RISK** (Risiko Tinggi)")
+        st.error("🔴 Pasien terindikasi **Risiko Tinggi**")
         st.info(
-            "Beberapa parameter klinis atau riwayat kesehatan menunjukkan potensi "
-            "risiko tinggi. Disarankan untuk segera berkonsultasi dengan tenaga medis."
+            "Beberapa parameter klinis atau riwayat kesehatan menunjukkan "
+            "potensi risiko tinggi. Disarankan untuk segera berkonsultasi "
+            "dengan tenaga medis."
         )
     else:
-        st.success("🟢 Pasien termasuk **LOW RISK** (Risiko Rendah)")
+        st.success("🟢 Pasien termasuk **Risiko Rendah**")
         st.info(
-            "Kondisi kesehatan saat ini relatif stabil berdasarkan data yang diinputkan."
+            "Kondisi kesehatan saat ini relatif stabil berdasarkan data "
+            "yang diinputkan."
         )
 
-    st.progress(int(prob_high), text=f"Probabilitas High Risk: **{prob_high:.1f}%**")
+    st.progress(
+        int(prob_high),
+        text=f"Probabilitas Risiko Tinggi: **{prob_high:.1f}%**"
+    )
+
     st.divider()
     st.subheader("💰 Estimasi Premi Asuransi Tahunan")
 
     if prediction == 1:
         premi_bawah = 6_000_000
         premi_atas  = 12_000_000
-        st.error(f"🔴 Estimasi Premi: **Rp 6.000.000 – Rp 12.000.000 / tahun**")
+
+        st.error(
+            "🔴 Estimasi Premi: "
+            "**Rp 6.000.000 – Rp 12.000.000 / tahun**"
+        )
+
     else:
         premi_bawah = 2_000_000
         premi_atas  = 4_000_000
-        st.success(f"🟢 Estimasi Premi: **Rp 2.000.000 – Rp 4.000.000 / tahun**")
+
+        st.success(
+            "🟢 Estimasi Premi: "
+            "**Rp 2.000.000 – Rp 4.000.000 / tahun**"
+        )
 
     col_e1, col_e2 = st.columns(2)
+
     col_e1.metric("Batas Bawah Premi", f"Rp {premi_bawah:,.0f}")
     col_e2.metric("Batas Atas Premi",  f"Rp {premi_atas:,.0f}")
 
     st.caption(
-        "⚠️ Estimasi premi didasarkan pada hasil prediksi risiko oleh model machine learning. "
-        "Angka aktual dapat berbeda tergantung kebijakan masing-masing perusahaan asuransi."
+        "⚠️ Estimasi premi didasarkan pada hasil prediksi risiko oleh "
+        "model machine learning. Angka aktual dapat berbeda tergantung "
+        "kebijakan masing-masing perusahaan asuransi."
     )
 
-    # ── Perbandingan semua model (mode lanjutan) ─────────────────────────────
     if advanced_mode:
         st.divider()
         st.subheader("🤖 Perbandingan Semua Model")
+
         cols = st.columns(4)
-        model_labels = ["XGBoost", "Random Forest", "Decision Tree", "Logistic Regression"]
-        model_objs   = [xgb_model, rf_model, dt_model, lr_model]
+
+        model_labels = [
+            "XGBoost",
+            "Random Forest",
+            "Decision Tree",
+            "Logistic Regression"
+        ]
+
+        model_objs = [
+            xgb_model,
+            rf_model,
+            dt_model,
+            lr_model
+        ]
+
         for col, label, mdl in zip(cols, model_labels, model_objs):
-            p      = mdl.predict(input_scaled)[0]
+
+            p = mdl.predict(input_scaled)[0]
             prob_h = mdl.predict_proba(input_scaled)[0][1] * 100
+
             with col:
                 if p == 1:
-                    st.error(f"**{label}**\n\n🔴 High Risk\n\n{prob_h:.1f}%")
+                    st.error(
+                        f"**{label}**\n\n"
+                        f"🔴 Risiko Tinggi\n\n"
+                        f"{prob_h:.1f}%"
+                    )
                 else:
-                    st.success(f"**{label}**\n\n🟢 Low Risk\n\n{prob_h:.1f}%")
+                    st.success(
+                        f"**{label}**\n\n"
+                        f"🟢 Risiko Rendah\n\n"
+                        f"{prob_h:.1f}%"
+                    )
 
     st.divider()
+
     st.subheader("💡 Saran Kesehatan")
+
     st.markdown("""
     - Lakukan pemeriksaan kesehatan secara rutin setidaknya sekali setahun  
     - Jaga tekanan darah, kadar gula, dan kolesterol dalam batas normal  
@@ -192,10 +322,19 @@ if st.button("🔍 Prediksi Risiko Kesehatan", disabled=not models_loaded):
     """)
 
     st.subheader("📋 Ringkasan Data Input")
+
     col_a, col_b, col_c = st.columns(3)
-    col_a.metric("Usia", f"{age} thn")
+
+    col_a.metric("Usia", f"{age} tahun")
     col_b.metric("BMI", f"{bmi:.1f}")
-    col_c.metric("Tekanan Darah", f"{systolic_bp}/{diastolic_bp} mmHg")
+    col_c.metric(
+        "Tekanan Darah",
+        f"{systolic_bp}/{diastolic_bp} mmHg"
+    )
 
 st.markdown("---")
-st.caption("⚠️ Aplikasi ini hanya alat bantu skrining awal dan **tidak menggantikan diagnosis dokter**.")
+
+st.caption(
+    "⚠️ Aplikasi ini hanya alat bantu skrining awal dan "
+    "**tidak menggantikan diagnosis dokter**."
+)
