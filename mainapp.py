@@ -37,63 +37,6 @@ F1_SCORE = {
     "Logistic Regression": 0.81,
 }
 
-def hitung_estimasi_biaya(age, bmi, smoker, systolic_bp, diastolic_bp,
-                           hba1c, ldl, hospitalizations, medication_count,
-                           prob_high):
-    """
-    Hitung estimasi premi asuransi tahunan (Rupiah)
-    berdasarkan risk score dari faktor-faktor klinis.
-    """
-    TARIF_DASAR = 3_000_000 
-
-    risk_score = 1.0
-
-    if age < 30:
-        risk_score *= 1.0
-    elif age < 45:
-        risk_score *= 1.3
-    elif age < 60:
-        risk_score *= 1.7
-    else:
-        risk_score *= 2.2
-    if bmi < 18.5:
-        risk_score *= 1.1
-    elif bmi < 25:
-        risk_score *= 1.0
-    elif bmi < 30:
-        risk_score *= 1.2
-    else:
-        risk_score *= 1.5
-    if smoker == "Yes":
-        risk_score *= 1.8
-    if systolic_bp >= 140 or diastolic_bp >= 90:
-        risk_score *= 1.4
-    elif systolic_bp >= 130 or diastolic_bp >= 85:
-        risk_score *= 1.2
-    if hba1c >= 6.5:
-        risk_score *= 1.5
-    elif hba1c >= 5.7:
-        risk_score *= 1.2
-    if ldl >= 190:
-        risk_score *= 1.4
-    elif ldl >= 160:
-        risk_score *= 1.2
-    if hospitalizations >= 3:
-        risk_score *= 1.5
-    elif hospitalizations >= 1:
-        risk_score *= 1.2
-    if medication_count >= 5:
-        risk_score *= 1.3
-    elif medication_count >= 3:
-        risk_score *= 1.1
-    risk_score *= (1 + prob_high / 100)
-
-    estimasi = TARIF_DASAR * risk_score
-    batas_bawah = estimasi * 0.85
-    batas_atas  = estimasi * 1.15
-
-    return int(estimasi), int(batas_bawah), int(batas_atas)
-
 st.sidebar.markdown("### 🤖 Pilihan Model")
 st.sidebar.markdown("Secara default aplikasi menggunakan **XGBoost** (F1-Score tertinggi).")
 
@@ -145,6 +88,7 @@ with c2:
 with c3:
     proc_consult_count = st.number_input("Prosedur Konsultasi", 0, 30, 2)
     proc_lab_count     = st.number_input("Prosedur Lab", 0, 50, 3)
+
 from sklearn.preprocessing import LabelEncoder
 
 def encode_cat(val, classes):
@@ -203,39 +147,25 @@ if st.button("🔍 Prediksi Risiko Kesehatan", disabled=not models_loaded):
     st.divider()
     st.subheader("💰 Estimasi Premi Asuransi Tahunan")
 
-    estimasi, bawah, atas = hitung_estimasi_biaya(
-        age, bmi, smoker, systolic_bp, diastolic_bp,
-        hba1c, ldl, hospitalizations_last_3yrs, medication_count,
-        prob_high
-    )
+    if prediction == 1:
+        premi_bawah = 6_000_000
+        premi_atas  = 12_000_000
+        st.error(f"🔴 Estimasi Premi: **Rp 6.000.000 – Rp 12.000.000 / tahun**")
+    else:
+        premi_bawah = 2_000_000
+        premi_atas  = 4_000_000
+        st.success(f"🟢 Estimasi Premi: **Rp 2.000.000 – Rp 4.000.000 / tahun**")
 
-    col_e1, col_e2, col_e3 = st.columns(3)
-    col_e1.metric("Estimasi Premi", f"Rp {estimasi:,.0f}")
-    col_e2.metric("Batas Bawah", f"Rp {bawah:,.0f}")
-    col_e3.metric("Batas Atas", f"Rp {atas:,.0f}")
+    col_e1, col_e2 = st.columns(2)
+    col_e1.metric("Batas Bawah Premi", f"Rp {premi_bawah:,.0f}")
+    col_e2.metric("Batas Atas Premi",  f"Rp {premi_atas:,.0f}")
 
     st.caption(
-        "⚠️ Estimasi ini dihitung berdasarkan risk score dari faktor klinis dan "
-        "probabilitas model. Angka aktual dapat berbeda tergantung kebijakan masing-masing perusahaan asuransi."
+        "⚠️ Estimasi premi didasarkan pada hasil prediksi risiko oleh model machine learning. "
+        "Angka aktual dapat berbeda tergantung kebijakan masing-masing perusahaan asuransi."
     )
 
-    st.markdown("**📌 Faktor yang mempengaruhi estimasi premi kamu:**")
-    faktor = []
-    if smoker == "Yes":             faktor.append("🚬 Perokok aktif (+80%)")
-    if age >= 60:                   faktor.append("👴 Usia di atas 60 tahun (+120%)")
-    elif age >= 45:                 faktor.append("🧑 Usia 45-59 tahun (+70%)")
-    if bmi >= 30:                   faktor.append("⚖️ BMI obesitas (+50%)")
-    if systolic_bp >= 140:          faktor.append("🩺 Hipertensi (+40%)")
-    if hba1c >= 6.5:                faktor.append("🩸 HbA1c tinggi/diabetes (+50%)")
-    if ldl >= 190:                  faktor.append("🫀 Kolesterol sangat tinggi (+40%)")
-    if hospitalizations_last_3yrs >= 3: faktor.append("🏥 Riwayat rawat inap sering (+50%)")
-    if prob_high >= 70:             faktor.append(f"🤖 Probabilitas High Risk tinggi ({prob_high:.1f}%)")
-
-    if faktor:
-        for f in faktor:
-            st.markdown(f"- {f}")
-    else:
-        st.markdown("✅ Tidak ada faktor risiko signifikan yang terdeteksi.")
+    # ── Perbandingan semua model (mode lanjutan) ─────────────────────────────
     if advanced_mode:
         st.divider()
         st.subheader("🤖 Perbandingan Semua Model")
