@@ -7,10 +7,11 @@ st.set_page_config(
     layout="centered"
 )
 
-st.title("🏥 Sistem Prediksi Risiko Kesehatan")
+st.title("🏥 Sistem Prediksi Estimasi Biaya Asuransi Kesehatan")
 st.markdown(
-    "**Aplikasi ini memprediksi apakah seseorang termasuk kategori risiko tinggi "
-    "berdasarkan data klinis dan gaya hidup.**"
+    "**Aplikasi ini menggunakan machine learning untuk memprediksi "
+    "tingkat risiko kesehatan berdasarkan data klinis dan gaya hidup "
+    "guna membantu estimasi premi asuransi kesehatan.**"
 )
 
 @st.cache_resource
