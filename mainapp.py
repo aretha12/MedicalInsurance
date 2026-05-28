@@ -141,7 +141,7 @@ with c1:
 
 with c2:
     proc_imaging_count = st.number_input(
-        "Pemeriksaan Pencitraan Medis",
+        "Jumlah pemeriksaan Scan (Rontgen/USG/CT Scan)",
         0, 20, 1
     )
 
